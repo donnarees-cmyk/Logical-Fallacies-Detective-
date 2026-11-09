@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic Detective Academy | 6th Grade ELA Fallacy Challenge</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti for Reward Animations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Fredoka & Outfit for fun, legible arcade design -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            body: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            detective: {
+              purple: '#6C5CE7',
+              pink: '#FD79A8',
+              yellow: '#FDCB6E',
+              blue: '#0984E3',
+              green: '#00B894',
+              dark: '#2D3436',
+              card: '#1E272E'
+            }
+          },
+          animation: {
+            'bounce-short': 'bounce 0.6s infinite alternate',
+            'pulse-glow': 'pulseGlow 2s infinite',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 15px rgba(108, 92, 231, 0.6)' },
+              '50%': { boxShadow: '0 0 30px rgba(253, 121, 168, 0.8)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      user-select: none;
+    }
+    .font-display { font-family: 'Fredoka', sans-serif; }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: #6C5CE7; border-radius: 4px; }
+    
+    .glass-card {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .arcade-btn {
+      transition: all 0.15s ease;
+      box-shadow: 0px 6px 0px rgba(0,0,0,0.3);
+    }
+    .arcade-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0px 2px 0px rgba(0,0,0,0.3);
+    }
+    
+    /* Speech Highlighting */
+    .speaking-highlight {
+      background-color: rgba(253, 203, 110, 0.3);
+      border-radius: 4px;
+      padding: 0 4px;
+    }
+
+    @media print {
+      body { background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+    }
+    .print-only { display: none; }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 pb-10">
+
+  <!-- TOP APP BAR / GAMIFIED HEADER -->
+  <header class="sticky top-0 z-50 glass-card bg-slate-900/90 border-b border-purple-500/30 px-4 py-3 shadow-lg">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-2xl shadow-lg shadow-purple-500/40">
+          🔍
+        </div>
+        <div>
+          <h1 class="font-display text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400">
+            LOGIC DETECTIVE ACADEMY
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">6th Grade ELA Fallacy Training</p>
+        </div>
+      </div>
+
+      <!-- Gamified Metrics: Score, Streak, Sound Toggle -->
+      <div class="flex items-center gap-3 sm:gap-6 bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
+        <!-- XP Points -->
+        <div class="flex items-center gap-2" title="Total Experience Points">
+          <i class="fa-solid font-bold fa-trophy text-yellow-400 text-lg"></i>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">XP Score</div>
+            <div id="xp-display" class="font-display font-bold text-lg text-yellow-300 leading-none">0</div>
+          </div>
+        </div>
+
+        <!-- Multiplier / Streak -->
+        <div class="flex items-center gap-2 border-l border-slate-700 pl-3 sm:pl-6" title="Streak Multiplier">
+          <i class="fa-solid fa-fire text-orange-500 text-lg animate-pulse"></i>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Streak</div>
+            <div id="streak-display" class="font-display font-bold text-lg text-orange-400 leading-none">0x</div>
+          </div>
+        </div>
+
+        <!-- Audio / Narration Master Control -->
+        <div class="flex items-center gap-2 border-l border-slate-700 pl-3 sm:pl-6">
+          <button id="global-speech-btn" onclick="toggleGlobalSpeech()" class="p-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition flex items-center gap-2 text-xs font-bold" title="Toggle Auto Read-Aloud">
+            <i id="global-speech-icon" class="fa-solid fa-volume-high"></i>
+            <span class="hidden sm:inline">Voice</span>
+          </button>
+          <button onclick="stopTTS()" class="p-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition text-xs" title="Stop Audio">
+            <i class="fa-solid fa-square"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LEVEL PROGRESS BAR -->
+    <div class="max-w-6xl mx-auto mt-3">
+      <div class="flex justify-between text-xs font-bold text-slate-300 mb-1 font-display">
+        <span id="level-title-display">Level 1: Detective Briefing (Lesson)</span>
+        <span id="progress-percent font-mono">0% Completed</span>
+      </div>
+      <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700 p-0.5">
+        <div id="level-progress-bar" class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 rounded-full transition-all duration-500 w-[10%]"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-5xl mx-auto w-full px-4 pt-6 flex-grow flex flex-col">
+
+    <!-- NAV TABS FOR LEVEL NAVIGATION -->
+    <nav class="flex flex-wrap justify-center gap-2 mb-6">
+      <button onclick="switchLevel(1)" id="tab-btn-1" class="tab-btn active font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-purple-500 bg-purple-600 text-white transition flex items-center gap-2">
+        <span>📖</span> Level 1: Learn
+      </button>
+      <button onclick="switchLevel(2)" id="tab-btn-2" class="tab-btn font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-slate-700 bg-slate-800 text-slate-400 hover:border-purple-500 transition flex items-center gap-2">
+        <span>⚔️</span> Level 2: Quiz Arena
+      </button>
+      <button onclick="switchLevel(3)" id="tab-btn-3" class="tab-btn font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-slate-700 bg-slate-800 text-slate-400 hover:border-purple-500 transition flex items-center gap-2">
+        <span>🕵️</span> Level 3: Spot the Bug
+      </button>
+      <button onclick="switchLevel(4)" id="tab-btn-4" class="tab-btn font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-slate-700 bg-slate-800 text-slate-400 hover:border-purple-500 transition flex items-center gap-2">
+        <span>🎨</span> Level 4: Fallacy Studio
+      </button>
+      <button onclick="switchLevel(5)" id="tab-btn-5" class="tab-btn font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-slate-700 bg-slate-800 text-slate-400 hover:border-purple-500 transition flex items-center gap-2">
+        <span>🎓</span> Certificate
+      </button>
+    </nav>
+
+    <!-- BADGES RIBBON BANNER -->
+    <div class="glass-card p-3 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-2 border-purple-500/20">
+      <div class="text-xs font-bold font-display uppercase tracking-wider text-purple-300 flex items-center gap-2">
+        <i class="fa-solid fa-award text-yellow-400 text-base"></i> Badges Unlocked:
+      </div>
+      <div class="flex flex-wrap gap-2" id="badges-container">
+        <!-- Badges rendered by JS -->
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- LEVEL 1: DETECTIVE BRIEFING (INTERACTIVE LESSON WITH AUDIO) -->
+    <!-- ========================================================================= -->
+    <section id="level-1" class="level-section flex-grow flex flex-col">
+      <div class="glass-card p-6 sm:p-8 rounded-3xl relative overflow-hidden border-2 border-purple-500/30">
+        
+        <!-- Header Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-700">
+          <div>
+            <span class="bg-purple-500/20 text-purple-300 font-mono text-xs px-3 py-1 rounded-full border border-purple-500/40 font-bold uppercase tracking-wider">Level 1 Lesson</span>
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mt-1">What is a Logical Fallacy?</h2>
+          </div>
+          <button onclick="speakElementText('level-1-content')" class="arcade-btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-display px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+            <i class="fa-solid fa-volume-high text-yellow-300"></i> Read Page Aloud
+          </button>
+        </div>
+
+        <!-- Lesson Body -->
+        <div id="level-1-content" class="space-y-6 text-slate-200 leading-relaxed">
+          <p class="text-base sm:text-lg">
+            Welcome, Detective! An <strong class="text-yellow-300">argument</strong> is when someone gives reasons to prove an idea. But watch out! Sometimes people use sneaky tricks called <strong class="text-pink-400">Logical Fallacies</strong>. A fallacy is a mistake in logic that makes an argument look strong, but it's actually broken!
+          </p>
+
+          <p class="text-sm sm:text-base text-slate-300 bg-slate-900/60 p-4 rounded-xl border-l-4 border-yellow-400">
+            💡 <strong>Detective Mission:</strong> Click any card below to listen to its case file. Learn all 4 fallacies to earn your <strong>"Logic Rookie"</strong> badge and unlock the Arena!
+          </p>
+
+          <!-- Fallacy Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            
+            <!-- Fallacy 1 -->
+            <div class="bg-slate-800/90 hover:bg-slate-800 border-2 border-purple-500/30 hover:border-purple-400 rounded-2xl p-5 transition cursor-pointer group" onclick="readCard('card-1-text')">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">🤼</span>
+                  <h3 class="font-display text-xl font-bold text-purple-300">1. Ad Hominem</h3>
+                </div>
+                <span class="text-xs bg-purple-900/80 text-purple-200 px-2 py-1 rounded font-mono">Person Attack</span>
+              </div>
+              <div id="card-1-text">
+                <p class="text-sm font-semibold text-slate-200 mb-2">Definition: Attacking the person's looks, clothing, or traits instead of their actual idea.</p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 text-xs text-purple-200 font-medium">
+                  💬 <strong>Example:</strong> "Don't listen to Alex's plan for the school recycling drive—he wears goofy socks!"
+                </div>
+                <p class="text-xs text-slate-400 mt-2">❌ <em>Why it fails:</em> Sock choice has zero connection to a recycling plan!</p>
+              </div>
+            </div>
+
+            <!-- Fallacy 2 -->
+            <div class="bg-slate-800/90 hover:bg-slate-800 border-2 border-pink-500/30 hover:border-pink-400 rounded-2xl p-5 transition cursor-pointer group" onclick="readCard('card-2-text')">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">🎺</span>
+                  <h3 class="font-display text-xl font-bold text-pink-300">2. Bandwagon</h3>
+                </div>
+                <span class="text-xs bg-pink-900/80 text-pink-200 px-2 py-1 rounded font-mono">Popularity Trick</span>
+              </div>
+              <div id="card-2-text">
+                <p class="text-sm font-semibold text-slate-200 mb-2">Definition: Claiming an idea is right just because "everyone else" is doing it.</p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 text-xs text-pink-200 font-medium">
+                  💬 <strong>Example:</strong> "You have to get these high-top sneakers! Everyone in 6th grade has them!"
+                </div>
+                <p class="text-xs text-slate-400 mt-2">❌ <em>Why it fails:</em> Just because something is popular doesn't mean it's smart or true.</p>
+              </div>
+            </div>
+
+            <!-- Fallacy 3 -->
+            <div class="bg-slate-800/90 hover:bg-slate-800 border-2 border-yellow-500/30 hover:border-yellow-400 rounded-2xl p-5 transition cursor-pointer group" onclick="readCard('card-3-text')">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">🌾</span>
+                  <h3 class="font-display text-xl font-bold text-yellow-300">3. Straw Man</h3>
+                </div>
+                <span class="text-xs bg-yellow-900/80 text-yellow-200 px-2 py-1 rounded font-mono">Fake Distortion</span>
+              </div>
+              <div id="card-3-text">
+                <p class="text-sm font-semibold text-slate-200 mb-2">Definition: Exaggerating or twisting someone's words to make them look ridiculous.</p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 text-xs text-yellow-200 font-medium">
+                  💬 <strong>Example:</strong> <br>
+                  • <em>Leo:</em> "We should eat more vegetables at lunch."<br>
+                  • <em>Maya:</em> "So you want to ban all snacks and force us to eat lawn grass?!"
+                </div>
+                <p class="text-xs text-slate-400 mt-2">❌ <em>Why it fails:</em> Maya invented a extreme fake argument Leo never made!</p>
+              </div>
+            </div>
+
+            <!-- Fallacy 4 -->
+            <div class="bg-slate-800/90 hover:bg-slate-800 border-2 border-blue-500/30 hover:border-blue-400 rounded-2xl p-5 transition cursor-pointer group" onclick="readCard('card-4-text')">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">🛷</span>
+                  <h3 class="font-display text-xl font-bold text-blue-300">4. Slippery Slope</h3>
+                </div>
+                <span class="text-xs bg-blue-900/80 text-blue-200 px-2 py-1 rounded font-mono">Extreme Chain</span>
+              </div>
+              <div id="card-4-text">
+                <p class="text-sm font-semibold text-slate-200 mb-2">Definition: Claiming one small event will lead to a giant catastrophe without any proof.</p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 text-xs text-blue-200 font-medium">
+                  💬 <strong>Example:</strong> "If I forget my pencil today, I'll fail the quiz, fail 6th grade, and never get a job!"
+                </div>
+                <p class="text-xs text-slate-400 mt-2">❌ <em>Why it fails:</em> One tiny mistake does not automatically cause total disaster!</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Next Level Button -->
+        <div class="mt-8 flex justify-end">
+          <button onclick="finishLevel1()" class="arcade-btn bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-display text-lg px-8 py-3 rounded-2xl font-bold flex items-center gap-3">
+            I'm Ready for Level 2 Quiz! <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- LEVEL 2: FALLACY FIGHTER QUIZ ARENA (INTERACTIVE GAMIFIED QUIZ) -->
+    <!-- ========================================================================= -->
+    <section id="level-2" class="level-section hidden flex-grow flex flex-col">
+      <div class="glass-card p-6 sm:p-8 rounded-3xl border-2 border-pink-500/30 flex-grow flex flex-col justify-between">
+        
+        <div>
+          <!-- Quiz Top Header -->
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-6 pb-4 border-b border-slate-700">
+            <div>
+              <span class="bg-pink-500/20 text-pink-300 font-mono text-xs px-3 py-1 rounded-full border border-pink-500/40 font-bold uppercase tracking-wider">Level 2 Quiz Arena</span>
+              <h2 id="quiz-question-num" class="font-display text-2xl font-bold text-white mt-1">Question 1 of 5</h2>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="readCurrentQuizQuestion()" class="arcade-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-display px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+                <i class="fa-solid fa-volume-high text-yellow-400"></i> Listen Question
+              </button>
+            </div>
+          </div>
+
+          <!-- Scenario Card -->
+          <div class="bg-slate-900/80 p-6 rounded-2xl border-2 border-slate-700 mb-6 shadow-inner">
+            <div class="text-xs text-slate-400 uppercase font-mono font-bold tracking-wider mb-2">Scenario Case File:</div>
+            <p id="quiz-question-text" class="text-lg sm:text-xl font-medium text-slate-100 leading-relaxed">
+              Loading question...
+            </p>
+          </div>
+
+          <!-- Multiple Choice Options Grid -->
+          <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Dynamically Rendered Buttons -->
+          </div>
+        </div>
+
+        <!-- Feedback Box -->
+        <div id="quiz-feedback" class="hidden mt-6 p-4 rounded-2xl text-center font-display text-lg font-bold transition-all"></div>
+
+        <!-- Quiz Nav Buttons -->
+        <div class="mt-6 flex justify-between items-center">
+          <div class="text-sm font-mono text-slate-400">Score Bonus: <span id="quiz-score-multiplier" class="text-yellow-300 font-bold">1x</span></div>
+          <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden arcade-btn bg-purple-600 hover:bg-purple-500 text-white font-display px-6 py-3 rounded-xl font-bold">
+            Next Challenge <i class="fa-solid fa-chevron-right ml-2"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- LEVEL 3: SPOT THE BUG (DIALOGUE BUG HUNTER) -->
+    <!-- ========================================================================= -->
+    <section id="level-3" class="level-section hidden flex-grow flex flex-col">
+      <div class="glass-card p-6 sm:p-8 rounded-3xl border-2 border-yellow-500/30">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-700">
+          <div>
+            <span class="bg-yellow-500/20 text-yellow-300 font-mono text-xs px-3 py-1 rounded-full border border-yellow-500/40 font-bold uppercase tracking-wider">Level 3 Bug Hunter</span>
+            <h2 class="font-display text-2xl font-bold text-white mt-1">Spot the Broken Logic!</h2>
+          </div>
+          <button onclick="readBugDialogue()" class="arcade-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-display px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+            <i class="fa-solid fa-volume-high text-yellow-400"></i> Read Chat
+          </button>
+        </div>
+
+        <p class="text-slate-300 mb-6 text-sm sm:text-base">
+          Read the text conversation below between two middle schoolers. <strong>Click on the speech bubble</strong> that contains a Logical Fallacy!
+        </p>
+
+        <!-- Chat Container -->
+        <div id="dialogue-chat-box" class="space-y-4 max-w-2xl mx-auto bg-slate-900/90 p-6 rounded-3xl border border-slate-700 mb-6">
+          <!-- Chat Bubbles inserted dynamically -->
+        </div>
+
+        <!-- Bug Diagnosis Selector (appears after clicking fallacious bubble) -->
+        <div id="bug-diagnosis-box" class="hidden glass-card p-6 rounded-2xl border-2 border-yellow-400 max-w-2xl mx-auto text-center space-y-4">
+          <h3 class="font-display text-lg font-bold text-yellow-300">🎯 Great Eye! You spotted the fallacy!</h3>
+          <p class="text-sm text-slate-200">Now identify which fallacy was used in that message:</p>
+          
+          <div class="grid grid-cols-2 gap-3" id="bug-fallacy-options">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Next Dialogue Button -->
+        <div class="mt-6 flex justify-end">
+          <button id="bug-next-btn" onclick="nextBugChallenge()" class="hidden arcade-btn bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-display px-6 py-3 rounded-xl font-bold">
+            Next Bug Case <i class="fa-solid fa-bug ml-2"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- LEVEL 4: FALLACY STUDIO (CREATE YOUR OWN FALLACY) -->
+    <!-- ========================================================================= -->
+    <section id="level-4" class="level-section hidden flex-grow flex flex-col">
+      <div class="glass-card p-6 sm:p-8 rounded-3xl border-2 border-blue-500/30">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-700">
+          <div>
+            <span class="bg-blue-500/20 text-blue-300 font-mono text-xs px-3 py-1 rounded-full border border-blue-500/40 font-bold uppercase tracking-wider">Level 4 Creator Studio</span>
+            <h2 class="font-display text-2xl font-bold text-white mt-1">Build Your Own Fallacy Comic!</h2>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Creator Controls -->
+          <div class="space-y-4 bg-slate-900/70 p-6 rounded-2xl border border-slate-700">
+            <div>
+              <label class="block text-xs font-mono text-slate-400 uppercase font-bold mb-2">1. Select Fallacy Type:</label>
+              <select id="studio-fallacy-type" onchange="updateStudioPreview()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white font-display focus:outline-none focus:border-purple-400">
+                <option value="Ad Hominem">Ad Hominem (Personal Attack)</option>
+                <option value="Bandwagon">Bandwagon (Popularity Trap)</option>
+                <option value="Straw Man">Straw Man (Extreme Twist)</option>
+                <option value="Slippery Slope">Slippery Slope (Domino Disaster)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-mono text-slate-400 uppercase font-bold mb-2">2. Character A Name & Topic:</label>
+              <input type="text" id="studio-char-a" value="Jordan" oninput="updateStudioPreview()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm text-white mb-2" placeholder="Character A Name">
+              <input type="text" id="studio-statement-a" value="We should get 5 extra minutes of recess." oninput="updateStudioPreview()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm text-white" placeholder="Character A's reasonable statement">
+            </div>
+
+            <div>
+              <label class="block text-xs font-mono text-slate-400 uppercase font-bold mb-2">3. Character B Name & Fallacy Reaction:</label>
+              <input type="text" id="studio-char-b" value="Taylor" oninput="updateStudioPreview()" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm text-white mb-2" placeholder="Character B Name">
+              <textarea id="studio-statement-b" oninput="updateStudioPreview()" rows="3" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-2.5 text-sm text-white" placeholder="Type character B's fallacious response..."></textarea>
+            </div>
+
+            <button onclick="speakStudioComic()" class="w-full arcade-btn bg-purple-600 hover:bg-purple-500 text-white font-display p-3 rounded-xl font-bold flex items-center justify-center gap-2">
+              <i class="fa-solid fa-volume-high"></i> Perform Comic Audio
+            </button>
+          </div>
+
+          <!-- Live Card Preview -->
+          <div class="flex flex-col justify-between">
+            <div id="studio-card-preview" class="bg-gradient-to-br from-slate-900 to-indigo-950 border-4 border-purple-500 rounded-3xl p-6 shadow-2xl relative">
+              <div class="flex justify-between items-center mb-4 pb-2 border-b border-purple-500/40">
+                <span id="preview-badge-type" class="font-display font-bold text-yellow-300 text-lg">Ad Hominem</span>
+                <span class="text-xs bg-purple-900 text-purple-200 px-3 py-1 rounded-full font-mono font-bold">STUDIO EDITION</span>
+              </div>
+
+              <!-- Dialogue Bubbles -->
+              <div class="space-y-4 my-6">
+                <!-- Bubble A -->
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white shadow font-display" id="avatar-a">J</div>
+                  <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 text-xs text-slate-200 max-w-[80%]">
+                    <strong id="preview-name-a" class="block text-blue-300 font-display">Jordan</strong>
+                    <span id="preview-text-a">We should get 5 extra minutes of recess.</span>
+                  </div>
+                </div>
+
+                <!-- Bubble B -->
+                <div class="flex items-start justify-end gap-3">
+                  <div class="bg-purple-900/80 p-3 rounded-2xl rounded-tr-none border border-purple-500/40 text-xs text-purple-100 max-w-[80%] text-right">
+                    <strong id="preview-name-b" class="block text-pink-300 font-display">Taylor</strong>
+                    <span id="preview-text-b">Don't listen to Jordan, he didn't even tie his shoes today!</span>
+                  </div>
+                  <div class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center font-bold text-white shadow font-display" id="avatar-b">T</div>
+                </div>
+              </div>
+
+              <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+                🔍 <strong>Detective Audit:</strong> <span id="preview-audit">This argument attacks personality instead of addressing recess logic.</span>
+              </div>
+            </div>
+
+            <!-- Publish Button -->
+            <button onclick="publishComic()" class="mt-4 w-full arcade-btn bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-display p-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2">
+              <i class="fa-solid fa-circle-check"></i> Submit & Finish Academy!
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- LEVEL 5: COMPLETION CERTIFICATE (PRINTABLE / VIEWABLE) -->
+    <!-- ========================================================================= -->
+    <section id="level-5" class="level-section hidden flex-grow flex flex-col">
+      <div class="glass-card p-6 sm:p-10 rounded-3xl border-4 border-yellow-400 text-center relative overflow-hidden">
+        
+        <!-- Printable Certificate Area -->
+        <div id="certificate-print-area" class="bg-slate-900 p-8 sm:p-12 rounded-2xl border-4 border-yellow-500 shadow-2xl relative">
+          
+          <!-- Decorative Corner Ribbons -->
+          <div class="absolute top-3 left-3 text-3xl">🎓</div>
+          <div class="absolute top-3 right-3 text-3xl">⭐</div>
+
+          <div class="font-mono text-xs uppercase tracking-widest text-yellow-400 font-bold mb-2">OFFICIAL ACADEMY DIPLOMA</div>
+          <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400 mb-2">
+            LOGIC DETECTIVE MASTER
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mb-6">This certifies that Detective Student:</p>
+
+          <!-- Editable Student Name -->
+          <div class="max-w-md mx-auto mb-6">
+            <input type="text" id="student-name-input" value="Detective Student" class="w-full text-center font-display text-2xl sm:text-3xl font-bold bg-slate-800/80 border-b-2 border-yellow-400 text-yellow-300 p-2 focus:outline-none focus:bg-slate-800 rounded">
+            <p class="text-[11px] text-slate-400 mt-1 no-print">(Click name to type your real name for printing)</p>
+          </div>
+
+          <p class="text-sm sm:text-base text-slate-200 max-w-xl mx-auto leading-relaxed mb-6">
+            has successfully identified, analyzed, and defeated <strong class="text-pink-300">Ad Hominem</strong>, <strong class="text-pink-300">Bandwagon</strong>, <strong class="text-pink-300">Straw Man</strong>, and <strong class="text-pink-300">Slippery Slope</strong> fallacies with supreme critical reasoning!
+          </p>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6">
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase font-mono font-bold">Total XP</div>
+              <div id="cert-xp" class="font-display text-xl sm:text-2xl font-bold text-yellow-400">0</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase font-mono font-bold">Accuracy</div>
+              <div id="cert-accuracy" class="font-display text-xl sm:text-2xl font-bold text-green-400">100%</div>
+            </div>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase font-mono font-bold">Rank</div>
+              <div class="font-display text-xs sm:text-sm font-bold text-purple-300 mt-1">Master Sleuth</div>
+            </div>
+          </div>
+
+          <!-- Badges Earned Display -->
+          <div class="mb-6">
+            <div class="text-xs text-slate-400 uppercase font-mono font-bold mb-2">Earned Badges</div>
+            <div id="cert-badges-grid" class="flex justify-center flex-wrap gap-2">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <div class="flex justify-between items-end text-left text-xs text-slate-400 pt-4 border-t border-slate-800">
+            <div>
+              <div>Issued by: <strong>6th Grade ELA Department</strong></div>
+              <div>Status: <strong>Certified Fallacy Fighter</strong></div>
+            </div>
+            <div class="text-right">
+              <div class="font-signature font-display text-base text-purple-400">Logic Detective HQ</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-6 flex flex-wrap justify-center gap-4 no-print">
+          <button onclick="window.print()" class="arcade-btn bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-slate-950 font-display px-6 py-3 rounded-2xl font-bold text-base flex items-center gap-2">
+            <i class="fa-solid fa-print"></i> Print Diploma
+          </button>
+          <button onclick="restartAcademy()" class="arcade-btn bg-purple-600 hover:bg-purple-500 text-white font-display px-6 py-3 rounded-2xl font-bold text-base flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Play Again
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC & SPEECH ENGINE -->
+  <script>
+    /* =========================================================================
+       GAME STATE & METRICS
+       ========================================================================= */
+    let gameState = {
+      xp: 0,
+      streak: 0,
+      currentLevel: 1,
+      globalSpeechEnabled: true,
+      badges: {
+        rookie: { name: 'Logic Rookie', icon: '🔍', unlocked: false, desc: 'Finished Lesson' },
+        quizMaster: { name: 'Fallacy Fighter', icon: '⚔️', unlocked: false, desc: 'Completed Quiz' },
+        bugDetector: { name: 'Bug Detector', icon: '🕵️', unlocked: false, desc: 'Spotted Dialogue Tricks' },
+        creator: { name: 'Fallacy Creator', icon: '🎨', unlocked: false, desc: 'Created Custom Comic' }
+      },
+      quizAnswersCorrect: 0,
+      totalQuizAttempts: 0
+    };
+
+    /* =========================================================================
+       TEXT-TO-SPEECH (TTS) SYSTEM
+       ========================================================================= */
+    const synth = window.speechSynthesis;
+    let currentUtterance = null;
+
+    function speakText(text, onEndCallback = null) {
+      if (!gameState.globalSpeechEnabled || !('speechSynthesis' in window)) return;
+
+      synth.cancel(); // Stop any ongoing speech
+
+      // Clean HTML tags if present
+      const cleanText = text.replace(/<[^>]*>?/gm, '');
+
+      currentUtterance = new SpeechSynthesisUtterance(cleanText);
+      currentUtterance.rate = 0.95; // Slightly slower for 6th grade clarity
+      currentUtterance.pitch = 1.0;
+
+      // Try selecting a good English voice
+      const voices = synth.getVoices();
+      const preferredVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha')));
+      if (preferredVoice) currentUtterance.voice = preferredVoice;
+
+      if (onEndCallback) {
+        currentUtterance.onend = onEndCallback;
+      }
+
+      synth.speak(currentUtterance);
+    }
+
+    function stopTTS() {
+      if (synth) synth.cancel();
+    }
+
+    function toggleGlobalSpeech() {
+      gameState.globalSpeechEnabled = !gameState.globalSpeechEnabled;
+      const icon = document.getElementById('global-speech-icon');
+      const btn = document.getElementById('global-speech-btn');
+      
+      if (gameState.globalSpeechEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        btn.classList.replace('bg-slate-700', 'bg-purple-600');
+        speakText("Audio narration enabled!");
+      } else {
+        stopTTS();
+        icon.className = 'fa-solid fa-volume-xmark';
+        btn.classList.replace('bg-purple-600', 'bg-slate-700');
+      }
+    }
+
+    function speakElementText(elementId) {
+      const el = document.getElementById(elementId);
+      if (el) speakText(el.innerText);
+    }
+
+    function readCard(cardTextId) {
+      const cardEl = document.getElementById(cardTextId);
+      if (cardEl) speakText(cardEl.innerText);
+    }
+
+    /* Populate voices when loaded */
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
+    }
+
+    /* =========================================================================
+       GAMIFICATION METRICS & BADGES
+       ========================================================================= */
+    function addXP(points) {
+      const oldXP = gameState.xp;
+      const multiplier = Math.max(1, gameState.streak);
+      const addedPoints = points * multiplier;
+      gameState.xp += addedPoints;
+      
+      // Animate XP text
+      document.getElementById('xp-display').innerText = gameState.xp;
+      
+      // Trigger small confetti for points
+      confetti({
+        particleCount: 25,
+        spread: 50,
+        origin: { y: 0.1 }
+      });
+    }
+
+    function incrementStreak() {
+      gameState.streak += 1;
+      document.getElementById('streak-display').innerText = `${gameState.streak}x`;
+    }
+
+    function resetStreak() {
+      gameState.streak = 0;
+      document.getElementById('streak-display').innerText = `0x`;
+    }
+
+    function unlockBadge(badgeKey) {
+      if (!gameState.badges[badgeKey].unlocked) {
+        gameState.badges[badgeKey].unlocked = true;
+        renderBadges();
+        speakText(`Badge Unlocked: ${gameState.badges[badgeKey].name}!`);
+        
+        // Celebration confetti
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function renderBadges() {
+      const container = document.getElementById('badges-container');
+      const certContainer = document.getElementById('cert-badges-grid');
+      container.innerHTML = '';
+      if (certContainer) certContainer.innerHTML = '';
+
+      Object.keys(gameState.badges).forEach(key => {
+        const b = gameState.badges[key];
+        const badgeEl = document.createElement('div');
+        badgeEl.className = `flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-display border transition-all ${
+          b.unlocked 
+            ? 'bg-purple-900/80 border-purple-400 text-yellow-300 shadow-md shadow-purple-900/50 scale-105' 
+            : 'bg-slate-800 border-slate-700 text-slate-500 opacity-60'
+        }`;
+        badgeEl.innerHTML = `<span>${b.icon}</span> <span>${b.name}</span>`;
+        badgeEl.title = b.desc;
+        container.appendChild(badgeEl);
+
+        if (certContainer && b.unlocked) {
+          const certB = badgeEl.cloneNode(true);
+          certContainer.appendChild(certB);
+        }
+      });
+    }
+
+    function updateProgress(percent, levelTitle) {
+      document.getElementById('level-progress-bar').style.width = `${percent}%`;
+      document.getElementById('level-title-display').innerText = levelTitle;
+    }
+
+    /* =========================================================================
+       LEVEL NAVIGATION
+       ========================================================================= */
+    function switchLevel(levelNum) {
+      stopTTS();
+      gameState.currentLevel = levelNum;
+
+      // Hide all levels
+      document.querySelectorAll('.level-section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(`level-${levelNum}`).classList.remove('hidden');
+
+      // Update Nav buttons styling
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        if (idx + 1 === levelNum) {
+          btn.className = 'tab-btn active font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-purple-500 bg-purple-600 text-white transition flex items-center gap-2';
+        } else {
+          btn.className = 'tab-btn font-display px-4 py-2 rounded-xl text-sm font-bold border-2 border-slate-700 bg-slate-800 text-slate-400 hover:border-purple-500 transition flex items-center gap-2';
+        }
+      });
+
+      // Update progress bar
+      if (levelNum === 1) updateProgress(20, 'Level 1: Detective Briefing (Lesson)');
+      else if (levelNum === 2) updateProgress(40, 'Level 2: Quiz Arena');
+      else if (levelNum === 3) updateProgress(65, 'Level 3: Spot the Bug');
+      else if (levelNum === 4) updateProgress(85, 'Level 4: Fallacy Studio');
+      else if (levelNum === 5) {
+        updateProgress(100, 'Level 5: Graduation Diploma');
+        prepareCertificate();
+      }
+    }
+
+    function finishLevel1() {
+      unlockBadge('rookie');
+      addXP(100);
+      switchLevel(2);
+      loadQuizQuestion(0);
+    }
+
+    /* =========================================================================
+       LEVEL 2: QUIZ ARENA DATA & LOGIC
+       ========================================================================= */
+    const quizQuestions = [
+      {
+        question: "Ben says, 'We should have a 10-minute quiet reading period.' Clara replies, 'So you want to ban talking in school forever and lock us in a silent room?' Which fallacy is Clara using?",
+        options: ["Ad Hominem", "Straw Man", "Bandwagon", "Slippery Slope"],
+        correct: 1,
+        explanation: "Straw Man! Clara twisted Ben's simple idea into an extreme, ridiculous rule he never suggested."
+      },
+      {
+        question: "Principal Vance announces a new club. Marcus says, 'Don't join Principal Vance's club—he wears ugly suits and doesn't know how to dance!' Which fallacy is Marcus using?",
+        options: ["Ad Hominem", "Bandwagon", "Slippery Slope", "Straw Man"],
+        correct: 0,
+        explanation: "Ad Hominem! Marcus is attacking the principal's clothing and dancing skills instead of addressing the club."
+      },
+      {
+        question: "Samantha tells her mom: 'You have to let me buy this gamer headset! Literally everyone in 6th grade has one!' Which fallacy is this?",
+        options: ["Slippery Slope", "Straw Man", "Bandwagon", "Ad Hominem"],
+        correct: 2,
+        explanation: "Bandwagon! Samantha is claiming she must have it just because 'everyone else' allegedly has it."
+      },
+      {
+        question: "Noah argues: 'If I fail this spelling quiz, I'll fail ELA, get held back in 6th grade, never get into college, and end up living in a cave!' What fallacy is this?",
+        options: ["Straw Man", "Slippery Slope", "Ad Hominem", "Bandwagon"],
+        correct: 1,
+        explanation: "Slippery Slope! Noah is jumping from one tiny quiz directly to living in a cave without logical proof."
+      },
+      {
+        question: "Mia says: 'Why should we listen to Coach Dave's advice on running fast? He's bad at playing video games!' Which fallacy is Mia committing?",
+        options: ["Bandwagon", "Slippery Slope", "Straw Man", "Ad Hominem"],
+        correct: 3,
+        explanation: "Ad Hominem! Video game skills have nothing to do with running coaching!"
+      }
+    ];
+
+    let currentQuizIdx = 0;
+    let quizAnswered = false;
+
+    function loadQuizQuestion(index) {
+      currentQuizIdx = index;
+      quizAnswered = false;
+      const q = quizQuestions[index];
+
+      document.getElementById('quiz-question-num').innerText = `Question ${index + 1} of ${quizQuestions.length}`;
+      document.getElementById('quiz-question-text').innerText = q.question;
+      document.getElementById('quiz-feedback').className = 'hidden mt-6 p-4 rounded-2xl text-center font-display text-lg font-bold transition-all';
+      document.getElementById('quiz-next-btn').classList.add('hidden');
+      document.getElementById('quiz-score-multiplier').innerText = `${Math.max(1, gameState.streak)}x`;
+
+      const grid = document.getElementById('quiz-options-grid');
+      grid.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-opt-btn arcade-btn bg-slate-800 hover:bg-slate-750 border-2 border-slate-700 hover:border-purple-500 text-slate-100 font-display p-4 rounded-2xl text-left text-base font-bold transition flex items-center justify-between group';
+        btn.innerHTML = `
+          <span>${opt}</span>
+          <i class="fa-solid fa-volume-low text-slate-500 group-hover:text-yellow-400 text-sm" onclick="event.stopPropagation(); speakText('${opt}')"></i>
+        `;
+        btn.onclick = () => handleQuizAnswer(i, btn);
+        grid.appendChild(btn);
+      });
+
+      readCurrentQuizQuestion();
+    }
+
+    function readCurrentQuizQuestion() {
+      const q = quizQuestions[currentQuizIdx];
+      speakText(`Question ${currentQuizIdx + 1}: ${q.question}`);
+    }
+
+    function handleQuizAnswer(selectedIndex, btnElement) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      gameState.totalQuizAttempts++;
+
+      const q = quizQuestions[currentQuizIdx];
+      const feedback = document.getElementById('quiz-feedback');
+      const allBtns = document.querySelectorAll('.quiz-opt-btn');
+
+      if (selectedIndex === q.correct) {
+        gameState.quizAnswersCorrect++;
+        incrementStreak();
+        addXP(100);
+
+        btnElement.className = 'quiz-opt-btn bg-emerald-600 border-2 border-emerald-400 text-white font-display p-4 rounded-2xl text-left text-base font-bold shadow-lg';
+        feedback.innerText = `🎯 Correct! ${q.explanation}`;
+        feedback.className = 'mt-6 p-4 rounded-2xl text-center font-display text-base font-bold bg-emerald-950/80 border-2 border-emerald-400 text-emerald-200 block';
+        speakText(`Correct! ${q.explanation}`);
+      } else {
+        resetStreak();
+        btnElement.className = 'quiz-opt-btn bg-rose-600 border-2 border-rose-400 text-white font-display p-4 rounded-2xl text-left text-base font-bold shadow-lg';
+        allBtns[q.correct].className = 'quiz-opt-btn bg-emerald-900 border-2 border-emerald-500 text-emerald-200 font-display p-4 rounded-2xl text-left text-base font-bold';
+        feedback.innerText = `❌ Oops! ${q.explanation}`;
+        feedback.className = 'mt-6 p-4 rounded-2xl text-center font-display text-base font-bold bg-rose-950/80 border-2 border-rose-400 text-rose-200 block';
+        speakText(`Oops! ${q.explanation}`);
+      }
+
+      document.getElementById('quiz-next-btn').classList.remove('hidden');
+    }
+
+    function nextQuizQuestion() {
+      if (currentQuizIdx < quizQuestions.length - 1) {
+        loadQuizQuestion(currentQuizIdx + 1);
+      } else {
+        unlockBadge('quizMaster');
+        switchLevel(3);
+        loadBugChallenge(0);
+      }
+    }
+
+    /* =========================================================================
+       LEVEL 3: SPOT THE BUG DIALOGUE DATA & LOGIC
+       ========================================================================= */
+    const bugDialogues = [
+      {
+        id: 1,
+        chat: [
+          { sender: "Ethan", avatar: "👦", text: "Hey guys, should we pick soccer or dodgeball for gym today?", bug: false },
+          { sender: "Chloe", avatar: "👧", text: "If we play dodgeball, someone will get hit, get mad, start a giant food fight, and get our whole grade suspended!", bug: true, fallacy: "Slippery Slope" },
+          { sender: "Ethan", avatar: "👦", text: "Woah, that escalated fast!", bug: false }
+        ]
+      },
+      {
+        id: 2,
+        chat: [
+          { sender: "Zoe", avatar: "👩", text: "I think we should spend 5 minutes reviewing spelling words before the quiz.", bug: false },
+          { sender: "Tyler", avatar: "👨", text: "Don't listen to Zoe, she forgot her lunchbox yesterday so she can't give study tips!", bug: true, fallacy: "Ad Hominem" }
+        ]
+      }
+    ];
+
+    let currentBugIdx = 0;
+    let selectedBugBubble = null;
+
+    function loadBugChallenge(index) {
+      currentBugIdx = index;
+      selectedBugBubble = null;
+      const bugData = bugDialogues[index];
+
+      const box = document.getElementById('dialogue-chat-box');
+      box.innerHTML = '';
+      document.getElementById('bug-diagnosis-box').classList.add('hidden');
+      document.getElementById('bug-next-btn').classList.add('hidden');
+
+      bugData.chat.forEach((msg, mIdx) => {
+        const bubble = document.createElement('div');
+        bubble.className = `p-4 rounded-2xl border-2 transition cursor-pointer flex items-start gap-3 ${
+          msg.sender === 'Ethan' || msg.sender === 'Zoe' 
+            ? 'bg-slate-800 border-slate-700 text-slate-200' 
+            : 'bg-purple-950/80 border-purple-500/50 text-purple-100 ml-6'
+        }`;
+        
+        bubble.innerHTML = `
+          <div class="text-2xl">${msg.avatar}</div>
+          <div class="flex-grow">
+            <div class="font-display font-bold text-xs text-yellow-400 mb-1">${msg.sender}</div>
+            <div class="text-sm font-medium">${msg.text}</div>
+          </div>
+        `;
+
+        bubble.onclick = () => clickBugBubble(msg, bubble);
+        box.appendChild(bubble);
+      });
+
+      readBugDialogue();
+    }
+
+    function readBugDialogue() {
+      const bugData = bugDialogues[currentBugIdx];
+      const fullText = bugData.chat.map(m => `${m.sender} says: ${m.text}`).join(' ');
+      speakText(fullText);
+    }
+
+    function clickBugBubble(msg, element) {
+      if (selectedBugBubble) return;
+
+      if (msg.bug) {
+        selectedBugBubble = element;
+        element.classList.add('border-yellow-400', 'ring-4', 'ring-yellow-400/50');
+        speakText("Nice spot! That bubble contains broken logic. Now select which fallacy it is!");
+        
+        // Show fallacy selection box
+        const diagBox = document.getElementById('bug-diagnosis-box');
+        diagBox.classList.remove('hidden');
+
+        const optsContainer = document.getElementById('bug-fallacy-options');
+        optsContainer.innerHTML = '';
+
+        const fallacies = ["Ad Hominem", "Bandwagon", "Straw Man", "Slippery Slope"];
+        fallacies.forEach(f => {
+          const b = document.createElement('button');
+          b.className = 'arcade-btn bg-slate-800 hover:bg-purple-600 border border-slate-600 font-display p-3 rounded-xl text-sm font-bold text-white';
+          b.innerText = f;
+          b.onclick = () => verifyBugFallacy(f, msg.fallacy);
+          optsContainer.appendChild(b);
+        });
+
+      } else {
+        speakText("That's just a normal statement! Look for the sneaky trick argument.");
+        element.classList.add('animate-shake', 'border-rose-500');
+        setTimeout(() => element.classList.remove('animate-shake', 'border-rose-500'), 500);
+      }
+    }
+
+    function verifyBugFallacy(chosen, actual) {
+      if (chosen === actual) {
+        addXP(150);
+        incrementStreak();
+        speakText(`Bingo! It was ${actual}!`);
+        document.getElementById('bug-diagnosis-box').innerHTML = `
+          <div class="text-emerald-400 font-display text-xl font-bold">🎉 Correct Diagnosis: ${actual}! +150 XP</div>
+        `;
+        document.getElementById('bug-next-btn').classList.remove('hidden');
+      } else {
+        speakText(`Not quite! Try another choice.`);
+      }
+    }
+
+    function nextBugChallenge() {
+      if (currentBugIdx < bugDialogues.length - 1) {
+        loadBugChallenge(currentBugIdx + 1);
+      } else {
+        unlockBadge('bugDetector');
+        switchLevel(4);
+        updateStudioPreview();
+      }
+    }
+
+    /* =========================================================================
+       LEVEL 4: FALLACY STUDIO GENERATOR
+       ========================================================================= */
+    function updateStudioPreview() {
+      const fallacyType = document.getElementById('studio-fallacy-type').value;
+      const charA = document.getElementById('studio-char-a').value || 'Jordan';
+      const textA = document.getElementById('studio-statement-a').value || 'We should get extra recess.';
+      const charB = document.getElementById('studio-char-b').value || 'Taylor';
+      let textB = document.getElementById('studio-statement-b').value;
+
+      // Default prompt fillers if empty
+      if (!textB) {
+        if (fallacyType === 'Ad Hominem') textB = `Don't listen to ${charA}, they didn't even tie their shoes today!`;
+        else if (fallacyType === 'Bandwagon') textB = `Nobody agrees with you! Everyone in 6th grade wants more video game time instead!`;
+        else if (fallacyType === 'Straw Man') textB = `So you want us to throw away all our textbooks and play outside 24/7?!`;
+        else if (fallacyType === 'Slippery Slope') textB = `If we do that, we won't learn math, we won't get jobs, and the town will crumble!`;
+        document.getElementById('studio-statement-b').value = textB;
+      }
+
+      document.getElementById('preview-badge-type').innerText = fallacyType;
+      document.getElementById('avatar-a').innerText = charA.charAt(0).toUpperCase();
+      document.getElementById('preview-name-a').innerText = charA;
+      document.getElementById('preview-text-a').innerText = textA;
+
+      document.getElementById('avatar-b').innerText = charB.charAt(0).toUpperCase();
+      document.getElementById('preview-name-b').innerText = charB;
+      document.getElementById('preview-text-b').innerText = textB;
+
+      // Audit notes
+      const audits = {
+        'Ad Hominem': `Attacks ${charA}'s personal traits instead of answering their idea.`,
+        'Bandwagon': `Uses peer pressure and numbers rather than logical evidence.`,
+        'Straw Man': `Exaggerates ${charA}'s point to make it sound ridiculous.`,
+        'Slippery Slope': `Predicts extreme disaster without step-by-step logic.`
+      };
+      document.getElementById('preview-audit').innerText = audits[fallacyType];
+    }
+
+    function speakStudioComic() {
+      const charA = document.getElementById('studio-char-a').value;
+      const textA = document.getElementById('studio-statement-a').value;
+      const charB = document.getElementById('studio-char-b').value;
+      const textB = document.getElementById('studio-statement-b').value;
+      speakText(`${charA} says: ${textA}. ${charB} replies with a fallacy: ${textB}`);
+    }
+
+    function publishComic() {
+      unlockBadge('creator');
+      addXP(200);
+      switchLevel(5);
+    }
+
+    /* =========================================================================
+       LEVEL 5: CERTIFICATE PREPARATION & RESTART
+       ========================================================================= */
+    function prepareCertificate() {
+      document.getElementById('cert-xp').innerText = gameState.xp;
+      
+      const accuracy = gameState.totalQuizAttempts > 0 
+        ? Math.round((gameState.quizAnswersCorrect / gameState.totalQuizAttempts) * 100) 
+        : 100;
+      document.getElementById('cert-accuracy').innerText = `${accuracy}%`;
+
+      renderBadges();
+      speakText("Congratulations Detective! You have completed the Logic Detective Academy!");
+
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.5 }
+      });
+    }
+
+    function restartAcademy() {
+      gameState.xp = 0;
+      gameState.streak = 0;
+      gameState.quizAnswersCorrect = 0;
+      gameState.totalQuizAttempts = 0;
+      Object.keys(gameState.badges).forEach(k => gameState.badges[k].unlocked = false);
+      
+      document.getElementById('xp-display').innerText = '0';
+      document.getElementById('streak-display').innerText = '0x';
+      renderBadges();
+      switchLevel(1);
+    }
+
+    /* Initialize Default Badges on Load */
+    window.onload = function() {
+      renderBadges();
+      updateStudioPreview();
+    };
+  </script>
+</body>
+</html>
